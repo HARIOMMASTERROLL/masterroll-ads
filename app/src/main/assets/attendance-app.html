@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASTER ROLL — Attendance & Salary Register</title>
+<style>
+  :root{
+    --ink:#232A3B;
+    --ink-soft:#4B5468;
+    --paper:#F1ECDD;
+    --paper-dark:#E3DBC3;
+    --paper-line:#CFC5A4;
+    --present:#3F7D58;
+    --absent:#AD403D;
+    --ot:#B9812C;
+    --half:#4E6E8C;
+    --wo:#7A6A8A;
+    --leave:#303F9F;
+    --sun-bg: #F1EBD1;
+    --gold:#A98A4E;
+    --nav-purple: #673AB7;
+    --font-simple: Arial, Helvetica, sans-serif;
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(35,42,59,0.045) 28px),
+      var(--paper);
+    color:var(--ink);
+    font-family: var(--font-simple);
+    min-height:100vh;
+    padding: 0;
+  }
+
+  .top-nav{
+    background: var(--nav-purple);
+    color: #fff;
+    border-top: 8px solid #000;
+    padding: calc(14px + var(--safe-top)) 16px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .top-nav .title{ font-size: 20px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+  .top-nav .menu-btn { cursor: pointer; padding: 5px; }
+  .top-nav svg{ width: 28px; height: 28px; fill: #fff; }
+
+  /* Side Menu Overlay */
+  .menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 2000;
+    display: none;
+  }
+  .menu-drawer {
+    position: fixed;
+    top: 0;
+    right: -280px;
+    width: 280px;
+    height: 100%;
+    background: var(--paper);
+    z-index: 2001;
+    box-shadow: -10px 0 20px rgba(0,0,0,0.2);
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    padding: 0; /* Removing padding to allow header color to fill top */
+    border-radius: 24px 0 0 24px; /* Professional rounded corner */
+    overflow: hidden;
+  }
+  .menu-drawer.open { right: 0; }
+  .menu-header {
+    background: var(--nav-purple);
+    color: #fff;
+    padding: calc(30px + var(--safe-top)) 24px 24px;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+  .menu-content {
+    padding: 15px;
+    flex: 1;
+  }
+  .menu-item {
+    padding: 14px 18px;
+    margin: 4px 0;
+    border-radius: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: background 0.2s;
+  }
+  .menu-item svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--nav-purple);
+    opacity: 0.8;
+  }
+  .menu-item:active {
+    background: rgba(103, 58, 183, 0.1);
+  }
+  .menu-footer {
+    padding: 20px;
+    border-top: 1px solid var(--paper-line);
+    background: rgba(0,0,0,0.02);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    padding-bottom: calc(20px + var(--safe-bottom));
+  }
+
+  .bottom-nav{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1.5px solid var(--ink);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  }
+  .nav-item{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    flex: 1;
+  }
+  .nav-item svg{ width: 22px; height: 22px; fill: currentColor; }
+  .nav-item.active{ color: var(--nav-purple); }
+
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding: 20px 16px 160px 16px; /* Increased bottom padding */
+    position: relative;
+  }
+
+  /* Professional Page Navigation Bar */
+  .page-nav-bar {
+    position: fixed;
+    bottom: 75px; /* Above the bottom menu */
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    pointer-events: none; /* Allow clicks to pass through to content if needed */
+    z-index: 1001;
+  }
+  .nav-btn-circle {
+    width: 50px;
+    height: 50px;
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all 0.2s;
+    color: var(--nav-purple);
+  }
+  .nav-btn-circle:active {
+    background: var(--nav-purple);
+    color: #fff;
+    transform: scale(0.9);
+  }
+  .nav-btn-circle svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+  }
+
+  .view{ display: none; }
+  .view.active{ display: block; }
+
+  header{ border-bottom:3.5px double var(--ink); padding-bottom:14px; margin-bottom:28px; background: rgba(255,255,255,0.5); padding: 15px; border: 1.5px solid var(--ink); box-shadow: 2px 2px 0 rgba(0,0,0,0.1); }
+  h1{ font-size:32px; font-weight: 800; letter-spacing:1px; margin:0; color:var(--ink); text-transform: uppercase; }
+  .subtitle{ font-size:12px; font-weight: 600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:2px; margin-top:6px; }
+
+  .card{ background:var(--paper); border:1.5px solid var(--ink); box-shadow: 3px 3px 0 rgba(35,42,59,0.15); margin-bottom:24px; padding:20px; position:relative; min-height: 10vh; display: flex; flex-direction: column; }
+  .card-title{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--ink-soft); margin:0 0 16px 0; padding-bottom:8px; border-bottom:1px dashed var(--paper-line); }
+
+  .field-stack{ display: flex; flex-direction: column; gap: 18px; }
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{ font-size:11px; font-weight: 700; text-transform:uppercase; letter-spacing:1px; color:var(--ink-soft); }
+  select, input[type=text], input[type=number], input[type=date]{ font-family: var(--font-simple); font-size:14px; padding:10px 12px; border:1.5px solid var(--ink); background:#fff; color:var(--ink); width: 100%; border-radius: 0; }
+
+  .month-grid{ display:grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 20px; }
+  .month-btn{ padding: 8px 2px; border: 1px solid var(--ink); font-size: 10px; font-weight: 700; text-align: center; cursor: pointer; background: #fff; color: var(--ink); }
+  .month-btn.active{ background: var(--nav-purple); color: #fff; border-color: var(--nav-purple); }
+
+  .month-nav{display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:12px;}
+  .month-nav .m-label{font-size:20px; font-weight: 700; min-width:190px; text-align:center; text-transform: uppercase;}
+  .month-nav button{padding:6px 12px; width: auto; background: var(--ink); color: #fff; border: none; font-weight: 700;}
+
+  .cal-grid{ display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; margin-top:14px; width: 100%; }
+  .dow{ font-size:10px; font-weight:800; text-align:center; color:var(--ink-soft); text-transform:uppercase; padding-bottom:8px; }
+
+  .day-cell{ position:relative; border:1px solid var(--paper-line); border-radius:4px; background:#fff; height:90px; padding:4px; cursor:pointer; display:flex; flex-direction:column; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow: hidden; }
+  .day-cell.empty{background:transparent;border:none;box-shadow:none;cursor:default;}
+  .day-cell.sun{ background: var(--sun-bg); }
+  .day-num{ font-size:11px; font-weight:700; color:var(--ink-soft); text-align: left; }
+  .stamp-container{ flex: 1; display: flex; align-items: center; justify-content: center; }
+  .stamp{ width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 800; }
+  .day-cell[data-status="P"] .stamp{ background:var(--present); }
+  .day-cell[data-status="A"] .stamp{ background:var(--absent); }
+  .day-cell[data-status="OT"] .stamp{ background:var(--ot); }
+  .day-cell[data-status="H"] .stamp{ background:var(--half); }
+  .day-cell[data-status="WO"] .stamp{ background:var(--wo); }
+  .day-cell[data-status="L"] .stamp{ background:var(--leave); }
+
+  .ot-area{ border-top: 1.5px solid var(--ot); margin-top: auto; padding: 4px 0; text-align: center; }
+  .ot-area input{ width: 100%; border: none; background: none; text-align: center; font-size: 14px; font-weight: 800; color: var(--ink); padding: 0; }
+
+  .legend-list{ display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+  .legend-item{ display: flex; align-items: center; gap: 6px; }
+  .l-box{ width: 14px; height: 14px; border-radius: 2px; border: 2px solid currentColor; }
+  .lp{ color: var(--present); } .la{ color: var(--absent); } .lot{ color: var(--ot); } .lh{ color: var(--half); } .lwo{ color: var(--wo); } .ll{ color: var(--leave); }
+
+  .ot-total-box-new{ background: #FFF9E1; border: 1.5px solid var(--ot); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; margin-top: 10px; }
+  .ot-total-box-new .label{ font-size: 11px; font-weight: 700; color: var(--ot); text-transform: uppercase; letter-spacing: 0.5px; }
+  .ot-total-box-new .value{ font-size: 24px; font-weight: 700; color: var(--ot); }
+
+  table.ledger{ width:100%; border-collapse:collapse; margin-top: 5px; }
+  table.ledger tr.header-row th{ padding: 12px 4px; border-bottom: 2px solid var(--ink); color: var(--ink-soft); font-size: 11px; font-weight: 700; }
+  table.ledger td{ padding: 10px 4px; border-bottom: 1px dashed var(--paper-line); font-size: 14px; }
+  table.ledger td.num{ text-align: right; font-weight: 600; }
+  table.ledger tr.bold-row td{ font-weight: 800; font-size: 16px; border-bottom: 2px solid var(--ink); border-top: 2px solid var(--ink); padding: 12px 4px; }
+  table.ledger tr.final-row td{ font-weight: 900; font-size: 20px; border-bottom: none; padding-top: 15px; }
+
+  .slip-box{ border: 1.5px dashed var(--ink); padding: 15px; margin-top: 15px; background: rgba(0,0,0,0.02); }
+  .slip-row{ display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; font-weight: 600; }
+  .pdf-btn{ margin-top: 15px; background: var(--gold); border: none; color: #fff; padding: 14px; width: 100%; font-weight: 800; text-transform: uppercase; cursor: pointer; letter-spacing: 1px; }
+
+  footer{text-align:center;font-size:10px;font-weight: 600;color:var(--ink-soft);margin-top:40px;letter-spacing:1px; padding: 0 20px;}
+
+  /* AUTH STYLES */
+  .auth-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--paper); z-index: 5000;
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .auth-card {
+    background: #fff; border: 2px solid var(--ink);
+    padding: 30px 20px; width: 100%; max-width: 400px;
+    box-shadow: 6px 6px 0 var(--ink);
+    text-align: center;
+  }
+  .auth-card h2 { text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; }
+  .auth-step { display: none; }
+  .auth-step.active { display: block; }
+  .auth-input {
+    width: 100%; padding: 15px; border: 1.5px solid var(--ink);
+    font-size: 18px; text-align: center; margin-bottom: 20px;
+    letter-spacing: 2px; font-weight: 700;
+  }
+  .auth-btn {
+    width: 100%; padding: 15px; background: var(--nav-purple);
+    color: #fff; border: none; font-weight: 800; text-transform: uppercase;
+    cursor: pointer; font-size: 14px;
+  }
+  .auth-link { color: var(--nav-purple); font-size: 12px; font-weight: 700; margin-top: 20px; cursor: pointer; display: inline-block; }
+</style>
+</head>
+<body>
+
+<!-- Login / Register Overlay -->
+<div id="authView" class="auth-overlay">
+  <div class="auth-card">
+    <h2>Master Roll</h2>
+
+    <!-- Step 0: Choice -->
+    <div id="step-choice" class="auth-step active">
+      <p style="font-size: 12px; color: var(--ink-soft); margin-bottom: 25px;">CHOOSE AN OPTION TO CONTINUE</p>
+      <button class="auth-btn" style="margin-bottom: 15px;" onclick="setAuthMode('login')">Login</button>
+      <button class="auth-btn" style="background: var(--ink-soft);" onclick="setAuthMode('register')">Register</button>
+    </div>
+
+    <!-- Step 1: Enter Number (Login/Register) -->
+    <div id="step-phone" class="auth-step">
+      <p id="phoneStepLabel" style="font-size: 12px; color: var(--ink-soft); margin-bottom: 20px;">ENTER MOBILE NUMBER</p>
+      <input type="number" id="authPhone" class="auth-input" placeholder="9876543210">
+      <button class="auth-btn" onclick="handlePhoneSubmit()">Continue</button>
+      <div class="auth-link" onclick="showAuthStep('choice')">Back</div>
+    </div>
+
+    <!-- Step 2: OTP (Registration) -->
+    <div id="step-otp" class="auth-step">
+      <p style="font-size: 12px; color: var(--ink-soft); margin-bottom: 20px;">VERIFY OTP SENT TO <br><b id="displayPhone"></b></p>
+      <div id="otpDisplay" style="background: #FFF9E1; border: 1.5px dashed var(--ot); padding: 10px; margin-bottom: 15px; font-weight: 800; color: var(--ot);">SENDING SMS...</div>
+      <input type="number" id="authOtp" class="auth-input" placeholder="000000">
+      <p id="autoDetectMsg" style="font-size: 10px; color: var(--present); font-weight: 700; margin-bottom: 15px; display: none;">✓ AUTO-DETECTING OTP...</p>
+      <button class="auth-btn" onclick="handleOtpSubmit()">Verify Manually</button>
+      <div class="auth-link" onclick="showAuthStep('phone')">Change Number / Resend</div>
+    </div>
+  </div>
+</div>
+
+<div class="top-nav">
+  <div class="title">MASTER ROLL</div>
+  <div style="display: flex; gap: 15px; align-items: center;">
+    <div class="menu-btn" onclick="if(window.AndroidStore) window.AndroidStore.shareApp()">
+      <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+    </div>
+    <div class="menu-btn" onclick="toggleMenu(true)">
+      <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- Side Menu Drawer -->
+<div class="menu-overlay" id="menuOverlay" onclick="toggleMenu(false)"></div>
+<div class="menu-drawer" id="menuDrawer">
+  <div class="menu-header">MASTER ROLL</div>
+  <div class="menu-content">
+    <div class="menu-item" onclick="showView('settings'); toggleMenu(false)">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      Home / Setup
+    </div>
+    <div class="menu-item" onclick="showView('report'); toggleMenu(false)">
+      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12h-2v-2h2v2zm0-4h-2V6h2v4z"/></svg>
+      Report Issue
+    </div>
+    <div class="menu-item" onclick="showView('about'); toggleMenu(false)">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      About Us
+    </div>
+    <div class="menu-item" onclick="showView('privacy'); toggleMenu(false)">
+      <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+      Privacy Policy
+    </div>
+    <div class="menu-item" onclick="if(window.AndroidStore) window.AndroidStore.shareApp(); toggleMenu(false)">
+      <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+      Share App
+    </div>
+  </div>
+  <div class="menu-footer">
+    <span>APP VERSION</span>
+    <span id="appVersionDisplay">v1.3.0</span>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="showView('settings')">
+    <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.21.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    Setup
+  </div>
+  <div class="nav-item" onclick="showView('attendance')">
+    <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+    Daily
+  </div>
+  <div class="nav-item" onclick="showView('salary')">
+    <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 3.98 2.55.47 3.15 1.49 3.15 2.42 0 1.21-1.15 2.02-3.15 2.02-2.09 0-2.98-.81-3.13-2.1H4.42c.14 2.19 1.76 3.42 3.58 3.93V21h3v-2.06c2-.37 3.65-1.42 3.65-3.54 0-2.58-1.9-3.41-4.87-4z"/></svg>
+    Payslip
+  </div>
+</div>
+
+<!-- Navigation Buttons Circle -->
+<div class="page-nav-bar">
+  <div class="nav-btn-circle" id="prevPageBtn" onclick="navPage(-1)">
+    <svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+  </div>
+  <div class="nav-btn-circle" id="nextPageBtn" onclick="navPage(1)">
+    <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="view-settings" class="view active">
+    <header><h1>MASTER ROLL</h1><div class="subtitle">System & Employee Setup</div></header>
+    <div class="card"><div class="card-title">COMPANY NAME</div><div class="field"><input type="text" id="companyName" placeholder="Enter Company Name"></div></div>
+    <div class="card">
+      <div class="card-title">Employee Settings</div>
+      <div class="field-stack">
+        <div class="field"><label>Select Employee</label><select id="empSelect"></select></div>
+        <div class="field"><label>Name</label><input type="text" id="empName" placeholder="e.g. Ramesh Kumar"></div>
+        <div class="field"><label>Employee ID</label><input type="text" id="empIdCode" placeholder="e.g. EMP001"></div>
+        <div class="field"><label>Monthly Salary (₹)</label><input type="number" id="empSalary" placeholder="e.g. 18000"></div>
+        <div class="field"><label>OT Type</label><select id="empOtMultiplier"><option value="1">Single (1×)</option><option value="2" selected>Double (2×)</option></select></div>
+        <div class="field"><label>LWF Deduction (₹)</label><input type="number" id="empLwf" placeholder="34"></div>
+        <div class="field">
+          <label>Attendance Reward (₹)</label>
+          <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;"><span style="font-size: 9px;">0 Absents</span><input type="number" id="empReward0"></div>
+            <div style="flex: 1;"><span style="font-size: 9px;">1 Absent</span><input type="number" id="empReward1"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--absent);">SYSTEM BACKUP</div>
+      <button onclick="exportData()" style="background:var(--present); color:#fff; border:none; padding:12px; font-weight:800; margin-bottom:10px;">SAVE DATA TO FILE</button>
+      <button onclick="document.getElementById('importFile').click()" style="background:var(--ink-soft); color:#fff; border:none; padding:12px; font-weight:800;">RESTORE FROM FILE</button>
+      <input type="file" id="importFile" style="display:none;" onchange="handleFileImport(event)">
+    </div>
+  </div>
+
+  <div id="view-attendance" class="view">
+    <div class="card">
+      <div class="card-title">Daily Attendance — <span id="currentSelectionLabel"></span></div>
+      <div class="month-grid" id="monthGrid"></div>
+      <div class="month-nav"><button id="prevMonth">‹</button><div class="m-label" id="monthLabel"></div><button id="nextMonth">›</button></div>
+      <div class="cal-grid" id="dowRow"></div><div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <div id="view-salary" class="view">
+    <div class="card">
+      <div class="card-title" id="slipTitle">SALARY PAY SLIP</div>
+      <div class="ot-total-box-new"><span class="label">Total OT Hours</span><span class="value" id="otTotalBig">0 h</span></div>
+      <table class="ledger">
+        <tr class="header-row"><th>ITEM</th><th>COUNT</th><th style="text-align:right;">AMOUNT</th></tr>
+        <tr class="bold-row"><td>Basic</td><td></td><td class="num" id="amtBasic">0</td></tr>
+        <tr><td>Present Days</td><td id="cntP">0</td><td class="num" id="amtP">0</td></tr>
+        <tr><td>Half Days</td><td id="cntH">0</td><td class="num" id="amtH">0</td></tr>
+        <tr><td>OT Amount</td><td id="cntOTHrs">0</td><td class="num" id="amtOTHrs">0</td></tr>
+        <tr><td>Fooding</td><td id="cntFood">0</td><td class="num" id="amtFood">0</td></tr>
+        <tr><td>Award</td><td></td><td class="num" id="amtAward">0</td></tr>
+        <tr class="bold-row"><td>Gross</td><td></td><td class="num" id="totalEarned">0</td></tr>
+        <tr><td>PF</td><td></td><td class="num" id="amtPF">0</td></tr>
+        <tr><td>ESI</td><td></td><td class="num" id="amtESI">0</td></tr>
+        <tr><td>LWF</td><td></td><td class="num" id="amtLWF">0</td></tr>
+        <tr class="final-row"><td>Net Payable</td><td></td><td class="num" id="netPayable">0</td></tr>
+      </table>
+      <div class="slip-box">
+        <label style="font-size:10px; font-weight:800;">BANK CREDIT AMOUNT</label>
+        <input type="number" id="creditAmt" style="margin-bottom:10px;">
+        <div class="slip-row"><span>Calculated</span><span id="resNet">₹0</span></div>
+        <div class="slip-row"><span>Credit</span><span id="resCredit">--</span></div>
+        <div class="slip-row"><span>Difference</span><span id="resDiff">--</span></div>
+        <button onclick="if(window.AndroidStore) window.AndroidStore.printPdf()" class="pdf-btn">GENERATE PDF PAY SLIP</button>
+        <button onclick="sharePayslip()" class="pdf-btn" style="background: #25D366; margin-top: 10px; border-color: #128C7E;">Share on WhatsApp / Other</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View 4: Report Issue -->
+  <div id="view-report" class="view">
+    <div class="card">
+      <div class="card-title">Report Issue / Feedback</div>
+      <div class="field-stack">
+        <div class="field">
+          <label>Issue Type</label>
+          <select id="feedbackType">
+            <option value="Bug / Error">Bug / Error</option>
+            <option value="Suggestion">Suggestion</option>
+            <option value="Question">Question</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <textarea id="feedbackText" rows="6" placeholder="Describe the issue or share your feedback here..." style="font-family: var(--font-simple); font-size:14px; padding:10px 12px; border:1.5px solid var(--ink); width: 100%; border-radius: 0; resize: vertical;"></textarea>
+        </div>
+        <button onclick="submitFeedback('email')" class="pdf-btn" style="background: var(--nav-purple);">Send via Email</button>
+        <button onclick="submitFeedback('whatsapp')" class="pdf-btn" style="background: #25D366; margin-top: 10px; border-color: #128C7E;">Message on WhatsApp</button>
+      </div>
+      <p style="font-size: 11px; color: var(--ink-soft); margin-top: 15px; line-height: 1.4;">Note: Reports include app version info to help solve bugs faster.</p>
+    </div>
+  </div>
+
+  <!-- View 5: About Us -->
+  <div id="view-about" class="view">
+    <div class="card">
+      <div class="card-title">About Us</div>
+      <div style="line-height: 1.6; font-size: 14px; color: var(--ink-soft);">
+        <p><strong>MASTER ROLL</strong> is a professional Attendance and Salary management tool designed for small to medium-sized businesses.</p>
+        <p>Our mission is to simplify the complex calculations of statutory deductions like PF, ESI, and LWF, providing a transparent and easy-to-use ledger for both employers and employees.</p>
+        <p>Developed with precision and care to ensure every penny is accounted for.</p>
+        <div style="margin-top: 20px; padding-top: 10px; border-top: 1px dashed var(--paper-line);">
+          <strong>Developed by:</strong> Hariom<br>
+          <strong>Phone / WhatsApp:</strong> +91 9905445671<br>
+          <strong>Email:</strong> hariom2003mgr@gmail.com / hariom10@amityonline.com
+        </div>
+      </div>
+      <button onclick="showView('settings')" class="pdf-btn" style="background: var(--nav-purple); margin-top: 30px;">Back to Home</button>
+    </div>
+  </div>
+
+  <!-- View 5: Privacy Policy -->
+  <div id="view-privacy" class="view">
+    <div class="card">
+      <div class="card-title">Privacy Policy</div>
+      <div style="line-height: 1.6; font-size: 13px; color: var(--ink-soft); max-height: 400px; overflow-y: auto; padding-right: 5px;">
+        <p><strong>Last Updated: Aug 2026</strong></p>
+        <p>1. <strong>Data Storage:</strong> All data entered into Master Roll, including employee names, salaries, and attendance records, is stored <strong>locally on your device</strong>. We do not upload your business data to any external servers.</p>
+        <p>2. <strong>Data Security:</strong> Since your data stays on your phone, you are responsible for its security. Use the "Backup to File" feature frequently to keep your records safe.</p>
+        <p>3. <strong>Permissions:</strong> The app requires storage permissions only to save and restore your backup files and generate PDF slips.</p>
+        <p>4. <strong>Updates:</strong> When updating the app via Android Studio, Android usually preserves your data, but always perform a manual backup first.</p>
+      </div>
+      <button onclick="showView('settings')" class="pdf-btn" style="background: var(--nav-purple); margin-top: 30px;">Back to Home</button>
+    </div>
+  </div>
+</div>
+
+<script>
+if(typeof window.storage === 'undefined'){
+  window.storage = {
+    async get(key){
+      try {
+        if(window.AndroidStore) {
+            const fd = window.AndroidStore.loadData(key);
+            if(fd) return {key, value: fd};
+        }
+        const raw = localStorage.getItem(key);
+        return raw ? {key, value: raw} : null;
+      } catch(e) { return null; }
+    },
+    async set(key, val){
+      try {
+        const s = typeof val === 'string' ? val : JSON.stringify(val);
+        if(window.AndroidStore) window.AndroidStore.saveData(key, s);
+        localStorage.setItem(key, s);
+        return {key, value: s};
+      } catch(e) { return null; }
+    }
+  };
+}
+
+async function showView(viewId) {
+  currentViewId = viewId; // Store current view
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const targetView = document.getElementById('view-' + viewId);
+  if (targetView) targetView.classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  const navItems = document.querySelectorAll('.nav-item');
+  if(viewId === 'settings') navItems[0].classList.add('active');
+  else if(viewId === 'attendance') { navItems[1].classList.add('active'); await refreshAll(); }
+  else if(viewId === 'salary') { navItems[2].classList.add('active'); renderSummary(); }
+
+  // Hide arrows on info pages
+  const arrows = document.querySelector('.page-nav-bar');
+  if (['about', 'privacy'].includes(viewId)) {
+      arrows.style.display = 'none';
+  } else {
+      arrows.style.display = 'flex';
+  }
+
+  window.scrollTo(0,0);
+}
+
+function sharePayslip() {
+    const e = currentEmp();
+    if (!e) { alert("Please select an employee first."); return; }
+
+    const t = computeTotals();
+    const month = currentDate.toLocaleString('en-IN', {month:'long', year:'numeric'});
+    const company = document.getElementById('companyName').value || "Master Roll";
+
+    let msg = `*SALARY PAY SLIP*\n`;
+    msg += `--------------------------\n`;
+    msg += `*Company:* ${company}\n`;
+    msg += `*Employee:* ${e.name}\n`;
+    msg += `*Month:* ${month}\n`;
+    msg += `--------------------------\n`;
+    msg += `Present Days: ${t.cP}\n`;
+    msg += `OT Hours: ${t.otH}h\n`;
+    msg += `Gross Salary: ₹${Math.round(t.gross).toLocaleString()}\n`;
+    msg += `Deductions: ₹${Math.round(t.pf + t.esi + t.lwf).toLocaleString()}\n`;
+    msg += `--------------------------\n`;
+    msg += `*NET PAYABLE: ₹${Math.round(t.net).toLocaleString()}*\n`;
+    msg += `--------------------------\n`;
+    msg += `Generated via Master Roll App`;
+
+    if (window.AndroidStore) {
+        window.AndroidStore.shareText(msg);
+    } else {
+        alert("On mobile, this opens the share menu.");
+    }
+}
+
+function submitFeedback(method) {
+    const type = document.getElementById('feedbackType').value;
+    const desc = document.getElementById('feedbackText').value.trim();
+    if (!desc) { alert("Please enter a description."); return; }
+
+    const ver = window.AndroidStore ? window.AndroidStore.getAppVersion() : '1.3.0';
+    const subject = `Master Roll Report: ${type}`;
+    const body = `App Version: ${ver}\nType: ${type}\n\nDescription:\n${desc}`;
+
+    if (window.AndroidStore) {
+        if (method === 'email') {
+            window.AndroidStore.sendEmail(subject, subject + "\n\n" + body);
+        } else if (method === 'whatsapp') {
+            window.AndroidStore.openSupportWhatsApp(body);
+        }
+        document.getElementById('feedbackText').value = "";
+    } else {
+        alert("Report captured! (On mobile, this opens your chosen app)");
+    }
+}
+
+// --- AUTH LOGIC ---
+let tempPhone = "";
+let authMode = "login";
+
+function showAuthStep(step) {
+    document.querySelectorAll('.auth-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + step).classList.add('active');
+}
+
+function setAuthMode(mode) {
+    authMode = mode;
+    const label = mode === 'login' ? 'LOGIN WITH MOBILE NUMBER' : 'REGISTER WITH MOBILE NUMBER';
+    document.getElementById('phoneStepLabel').textContent = label;
+    showAuthStep('phone');
+}
+
+async function handlePhoneSubmit() {
+    const phoneInput = document.getElementById('authPhone').value;
+    tempPhone = phoneInput.toString().trim();
+
+    if (tempPhone.length !== 10) {
+        alert("Mobile number must be exactly 10 digits.");
+        return;
+    }
+
+    if (window.AndroidStore) {
+        window.AndroidStore.sendOtp(tempPhone);
+        document.getElementById('displayPhone').textContent = tempPhone;
+        document.getElementById('otpDisplay').textContent = "SENDING REAL SMS...";
+    } else {
+        alert("Firebase Auth works on real device.");
+    }
+}
+
+function onOtpAutoFilled(code) {
+    document.getElementById('authOtp').value = code;
+    document.getElementById('autoDetectMsg').style.display = 'block';
+    setTimeout(() => {
+        handleOtpSubmit();
+    }, 1000);
+}
+
+function handleOtpSubmit() {
+    const inputOtp = document.getElementById('authOtp').value;
+    if (window.AndroidStore) {
+        window.AndroidStore.verifyOtp(inputOtp);
+    }
+}
+
+function enterApp() {
+    document.getElementById('authView').style.display = 'none';
+}
+
+function resetAppAuth() {
+    if (confirm("This will log you out and require new registration. Continue?")) {
+        localStorage.clear();
+        location.reload();
+    }
+}
+
+function toggleMenu(show) {
+  const drawer = document.getElementById('menuDrawer');
+  const overlay = document.getElementById('menuOverlay');
+  if (show) {
+    overlay.style.display = 'block';
+    setTimeout(() => drawer.classList.add('open'), 10);
+  } else {
+    drawer.classList.remove('open');
+    setTimeout(() => overlay.style.display = 'none', 300);
+  }
+}
+
+let currentViewId = 'settings';
+const viewOrder = ['settings', 'attendance', 'salary', 'report'];
+
+function navPage(dir) {
+  let idx = viewOrder.indexOf(currentViewId);
+  idx = (idx + dir + viewOrder.length) % viewOrder.length;
+  showView(viewOrder[idx]);
+}
+
+function updateNavButtons() {
+  // Optional: Hide arrows if at start/end, or leave loop for fast navigation
+  // For now, we leave them to loop
+}
+
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const STATUS_CYCLE = ['P','A','OT','H','WO','L'];
+function defaultStatusForDay(y, m, day){ const dow = new Date(y, m, day).getDay(); return dow===0 ? 'WO' : 'P'; }
+
+let employees = []; let currentEmpId = null; let currentDate = new Date(); let monthData = { days:{}, otHours:{} };
+function ymKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function attKey(eid, ym){ return 'att:'+eid+':'+ym; }
+
+async function loadEmployees(){
+  const r = await window.storage.get('employees');
+  employees = r ? JSON.parse(r.value) : [];
+  const cn = await window.storage.get('company_name');
+  if(cn) document.getElementById('companyName').value = cn.value;
+}
+async function saveEmployees(){ await window.storage.set('employees', employees); }
+async function loadMonth(){
+  const k = attKey(currentEmpId, ymKey(currentDate));
+  const r = await window.storage.get(k);
+  monthData = r ? JSON.parse(r.value) : { days:{}, otHours:{} };
+}
+async function saveMonth(){ await window.storage.set(attKey(currentEmpId, ymKey(currentDate)), monthData); }
+function currentEmp(){ return employees.find(e=>e.id===currentEmpId); }
+
+function renderEmpSelect(){
+  const sel = document.getElementById('empSelect'); sel.innerHTML = '';
+  if(!employees.length) { sel.innerHTML = '<option>— Add Employee —</option>'; return; }
+  employees.forEach(e=>{
+    const opt = document.createElement('option'); opt.value = e.id; opt.textContent = e.name;
+    if(e.id===currentEmpId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+function fillEmpFields(){
+  const e = currentEmp();
+  document.getElementById('empName').value = e ? e.name : '';
+  document.getElementById('empIdCode').value = e ? e.empCode : '';
+  document.getElementById('empSalary').value = e ? e.salary : '';
+  document.getElementById('empOtMultiplier').value = e ? e.otMultiplier : '2';
+  document.getElementById('empLwf').value = e ? e.lwfValue : '34';
+  document.getElementById('empReward0').value = e ? e.reward0 : '500';
+  document.getElementById('empReward1').value = e ? e.reward1 : '400';
+}
+function daysInMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); }
+
+function renderCalendarHeader(){
+  const lbl = currentDate.toLocaleString('en-IN',{month:'long', year:'numeric'});
+  document.getElementById('monthLabel').textContent = lbl;
+  document.getElementById('currentSelectionLabel').textContent = lbl;
+  const row = document.getElementById('dowRow'); row.innerHTML = '';
+  DOW.forEach(d=>{ const el = document.createElement('div'); el.className='dow'; el.textContent=d; row.appendChild(el); });
+}
+
+function renderCalendarGrid(){
+  const grid = document.getElementById('calGrid'); grid.innerHTML = '';
+  const first = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const total = daysInMonth(currentDate);
+  for(let i=0;i<first.getDay();i++) grid.appendChild(Object.assign(document.createElement('div'),{className:'day-cell empty'}));
+  for(let d=1; d<=total; d++){
+    const cell = document.createElement('div');
+    const dow = new Date(currentDate.getFullYear(), currentDate.getMonth(), d).getDay();
+    cell.className = 'day-cell' + (dow === 0 ? ' sun' : '');
+    const s = monthData.days[d] || defaultStatusForDay(currentDate.getFullYear(), currentDate.getMonth(), d);
+    cell.setAttribute('data-status', s);
+    cell.innerHTML = `<div class="day-num">${d}</div><div class="stamp-container"><div class="stamp">${s}</div></div>`;
+    if(s==='OT'){
+      const area = document.createElement('div'); area.className = 'ot-area';
+      const inp = document.createElement('input'); area.appendChild(inp); inp.type='number'; inp.value = monthData.otHours[d]||'';
+      inp.onclick = (e)=>e.stopPropagation();
+      inp.oninput = (e)=>{ monthData.otHours[d] = parseFloat(e.target.value)||0; saveMonth(); renderSummary(); };
+      cell.appendChild(area);
+    }
+    cell.onclick = ()=> cycleStatus(d);
+    grid.appendChild(cell);
+  }
+}
+
+function cycleStatus(d){
+  const cur = monthData.days[d] || defaultStatusForDay(currentDate.getFullYear(), currentDate.getMonth(), d);
+  monthData.days[d] = STATUS_CYCLE[(STATUS_CYCLE.indexOf(cur)+1) % STATUS_CYCLE.length];
+  if(monthData.days[d]!=='OT') delete monthData.otHours[d];
+  saveMonth(); renderCalendarGrid(); renderSummary();
+}
+
+function computeTotals(){
+  const e = currentEmp(); const total = daysInMonth(currentDate);
+  let cP=0, cA=0, otH=0, cF=0, cH=0, cL=0, cW=0;
+  for(let d=1; d<=total; d++){
+    const s = monthData.days[d] || defaultStatusForDay(currentDate.getFullYear(), currentDate.getMonth(), d);
+    if(s==='P') cP++; else if(s==='L') cL++; else if(s==='WO') cW++; else if(s==='A') cA++; else if(s==='H') cH++;
+    else if(s==='OT'){ cP++; const h = monthData.otHours[d]||0; otH += h; if(h>=3.5) cF++; }
+  }
+  const sal = e ? (parseFloat(e.salary)||0) : 0;
+  const perDay = sal / total;
+  const otR = ((sal/26)/8) * (e?e.otMultiplier:2);
+  const earned = (cP+cL+cW)*perDay + (cH*perDay*0.5) + (otH*otR) + (cF*60);
+  const award = cA===0 ? parseFloat(e?e.reward0:500) : (cA===1 ? parseFloat(e?e.reward1:400) : 0);
+  const gross = earned + award;
+  const pf = (15000/total) * 0.12 * (cP+cL+cW+cH*0.5);
+  const esi = gross * 0.0075;
+  const lwf = parseFloat(e?e.lwfValue:34);
+  return { sal, cP:cP+cL+cW, cH, otH, cF, award, gross, pf, esi, lwf, net: gross-pf-esi-lwf };
+}
+
+function renderSummary(){
+  const t = computeTotals();
+  document.getElementById('otTotalBig').textContent = t.otH + ' h';
+  document.getElementById('amtBasic').textContent = Math.round(t.sal).toLocaleString();
+  document.getElementById('cntP').textContent = t.cP; document.getElementById('amtP').textContent = Math.round(t.cP*(t.sal/daysInMonth(currentDate))).toLocaleString();
+  document.getElementById('cntH').textContent = t.cH; document.getElementById('amtH').textContent = Math.round(t.cH*0.5*(t.sal/daysInMonth(currentDate))).toLocaleString();
+  document.getElementById('cntOTHrs').textContent = t.otH; document.getElementById('amtOTHrs').textContent = Math.round(t.otH*(((t.sal/26)/8)*currentEmp()?.otMultiplier||2)).toLocaleString();
+  document.getElementById('cntFood').textContent = t.cF; document.getElementById('amtFood').textContent = t.cF*60;
+  document.getElementById('amtAward').textContent = Math.round(t.award);
+  document.getElementById('totalEarned').textContent = Math.round(t.gross).toLocaleString();
+  document.getElementById('amtPF').textContent = Math.round(t.pf);
+  document.getElementById('amtESI').textContent = Math.round(t.esi);
+  document.getElementById('amtLWF').textContent = Math.round(t.lwf);
+  document.getElementById('netPayable').textContent = '₹' + Math.round(t.net).toLocaleString();
+  document.getElementById('resNet').textContent = '₹' + Math.round(t.net).toLocaleString();
+  updateCredit(t.net);
+}
+
+function updateCredit(net){
+  const amt = parseFloat(document.getElementById('creditAmt').value)||0;
+  document.getElementById('resCredit').textContent = '₹' + Math.round(amt).toLocaleString();
+  const diff = amt - net;
+  document.getElementById('resDiff').textContent = (diff>=0?'+':'') + Math.round(diff).toLocaleString();
+  document.getElementById('resDiff').style.color = diff >=0 ? 'var(--present)' : 'var(--absent)';
+}
+
+async function refreshAll(){
+  renderEmpSelect(); fillEmpFields(); renderCalendarHeader();
+  if(currentEmpId) await loadMonth();
+  renderCalendarGrid(); renderSummary(); renderQuickMonths();
+}
+
+function renderQuickMonths(){
+  const g = document.getElementById('monthGrid'); g.innerHTML = '';
+  ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach((m,i)=>{
+    const b = document.createElement('div'); b.textContent = m; b.className = 'month-btn' + (i===currentDate.getMonth()?' active':'');
+    b.onclick = async ()=>{ currentDate.setMonth(i); await refreshAll(); };
+    g.appendChild(b);
+  });
+}
+
+async function exportData() {
+  const d = {}; for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); d[k]=localStorage.getItem(k); }
+  const b = new Blob([JSON.stringify(d)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup.json'; a.click();
+}
+function handleFileImport(e) {
+  const f = e.target.files[0]; if(!f) return;
+  const reader = new FileReader(); reader.onload = async (ev)=>{
+    const d = JSON.parse(ev.target.result);
+    for(const k in d) await window.storage.set(k, d[k]);
+    alert('Restored!'); location.reload();
+  };
+  reader.readAsText(f);
+}
+
+document.getElementById('empSelect').onchange = async (e)=>{ currentEmpId = e.target.value; await refreshAll(); };
+async function autoSave(){
+  const n = document.getElementById('empName').value.trim(); if(!n) return;
+  let e = currentEmp();
+  if(!e) { e = { id:'e'+Date.now() }; employees.push(e); currentEmpId = e.id; }
+  e.name = n; e.empCode = document.getElementById('empIdCode').value; e.salary = document.getElementById('empSalary').value;
+  e.otMultiplier = document.getElementById('empOtMultiplier').value; e.lwfValue = document.getElementById('empLwf').value;
+  e.reward0 = document.getElementById('empReward0').value; e.reward1 = document.getElementById('empReward1').value;
+  await saveEmployees(); renderEmpSelect(); renderSummary();
+}
+['empName','empIdCode','empSalary','empLwf','empReward0','empReward1'].forEach(id=>{ document.getElementById(id).oninput = autoSave; });
+document.getElementById('empOtMultiplier').onchange = autoSave;
+document.getElementById('companyName').oninput = (e)=> window.storage.set('company_name', e.target.value);
+document.getElementById('creditAmt').oninput = ()=> renderSummary();
+
+document.getElementById('prevMonth').onclick = async ()=>{ currentDate.setMonth(currentDate.getMonth()-1); await refreshAll(); };
+document.getElementById('nextMonth').onclick = async ()=>{ currentDate.setMonth(currentDate.getMonth()+1); await refreshAll(); };
+
+(async ()=>{
+  // Display real App Version from Android
+  if(window.AndroidStore && window.AndroidStore.getAppVersion) {
+      document.getElementById('appVersionDisplay').textContent = 'v' + window.AndroidStore.getAppVersion();
+  }
+
+  await loadEmployees(); if(employees.length) currentEmpId = employees[0].id;
+  await refreshAll();
+})();
+</script>
+</body>
+</html>

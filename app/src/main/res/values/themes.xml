@@ -1,0 +1,17 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.MasterRoll" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">#232A3B</item>
+        <item name="colorPrimaryVariant">#232A3B</item>
+        <item name="colorOnPrimary">#F1ECDD</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">#A98A4E</item>
+        <item name="colorSecondaryVariant">#A98A4E</item>
+        <item name="colorOnSecondary">#F1ECDD</item>
+        <!-- Status bar and Navigation bar transparency for Edge-to-Edge -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+    </style>
+</resources>

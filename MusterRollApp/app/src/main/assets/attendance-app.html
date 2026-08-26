@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muster Roll — Attendance & Salary Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#232A3B;
+    --ink-soft:#4B5468;
+    --paper:#F1ECDD;
+    --paper-dark:#E3DBC3;
+    --paper-line:#CFC5A4;
+    --present:#3F7D58;
+    --present-bg:#E4EEE3;
+    --absent:#AD403D;
+    --absent-bg:#F3E2DF;
+    --ot:#B9812C;
+    --ot-bg:#F3E9D4;
+    --half:#4E6E8C;
+    --half-bg:#E1E9EF;
+    --wo:#7A6A8A;
+    --wo-bg:#EAE4EF;
+    --gold:#A98A4E;
+    --shadow: 0 1px 0 rgba(35,42,59,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(35,42,59,0.045) 28px),
+      var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    padding:28px 16px 60px;
+    min-height:100vh;
+  }
+  .wrap{max-width:920px;margin:0 auto;}
+
+  /* Header */
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:3px double var(--ink);
+    padding-bottom:14px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  h1{
+    font-family:'Special Elite', cursive;
+    font-size:28px;
+    letter-spacing:0.5px;
+    margin:0;
+    color:var(--ink);
+  }
+  .subtitle{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    margin-top:4px;
+  }
+  .reg-no{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-align:right;
+  }
+
+  /* Cards */
+  .card{
+    background:var(--paper);
+    border:1.5px solid var(--ink);
+    box-shadow: 3px 3px 0 rgba(35,42,59,0.15);
+    margin-bottom:20px;
+    padding:18px 20px;
+    position:relative;
+  }
+  .card-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color:var(--ink-soft);
+    margin:0 0 14px 0;
+    padding-bottom:8px;
+    border-bottom:1px dashed var(--paper-line);
+  }
+
+  /* Employee row */
+  .emp-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft);}
+  select, input[type=text], input[type=number], input[type=date]{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    padding:8px 10px;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+    min-width:120px;
+  }
+  select:focus, input:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  button{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    padding:9px 14px;
+    background:var(--ink);
+    color:var(--paper);
+    border:1.5px solid var(--ink);
+    cursor:pointer;
+    transition:transform .08s ease;
+  }
+  button:hover{transform:translateY(-1px);}
+  button:active{transform:translateY(0px);}
+  button.ghost{background:transparent;color:var(--ink);}
+  button.danger{background:var(--absent);border-color:var(--absent);}
+  button:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+  /* Month nav */
+  .month-nav{display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:6px;}
+  .month-nav .m-label{font-family:'Special Elite',cursive;font-size:18px;min-width:190px;text-align:center;}
+  .month-nav button{padding:6px 12px;}
+
+  /* Calendar */
+  .cal-grid{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:8px;
+    margin-top:14px;
+  }
+  .dow{
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:10.5px;
+    font-weight:600;
+    text-align:center;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    padding-bottom:6px;
+  }
+  .day-cell{
+    position:relative;
+    border:1px solid var(--paper-line);
+    border-radius:6px;
+    background:#fff;
+    height:70px;
+    padding:6px 6px 5px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-items:stretch;
+    gap:2px;
+    transition:border-color .12s ease, box-shadow .12s ease, transform .12s ease;
+    overflow:hidden;
+    box-shadow:0 1px 2px rgba(35,42,59,0.05);
+  }
+  .day-cell:hover{border-color:var(--ink-soft); box-shadow:0 2px 6px rgba(35,42,59,0.12); transform:translateY(-1px);}
+  .day-cell.empty{background:transparent;border:none;box-shadow:none;cursor:default;}
+  .day-num{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;color:var(--ink-soft);flex:0 0 auto;}
+  .stamp-slot{flex:1 1 auto;display:flex;align-items:center;justify-content:center;}
+  .stamp{
+    align-self:center;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:11.5px;
+    font-weight:700;
+    padding:3px 11px;
+    border-radius:20px;
+    letter-spacing:0.5px;
+  }
+  .day-cell[data-status="P"] .stamp{color:#fff; background:var(--present);}
+  .day-cell[data-status="A"] .stamp{color:#fff; background:var(--absent);}
+  .day-cell[data-status="OT"] .stamp{color:#fff; background:var(--ot);}
+  .day-cell[data-status="H"] .stamp{color:#fff; background:var(--half);}
+  .day-cell[data-status="WO"] .stamp{color:var(--wo); background:var(--wo-bg); border:1px solid var(--wo);}
+  .day-cell[data-status="WO"]{background:var(--paper-dark);}
+  .ot-hours{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9px;
+    text-align:center;
+    color:var(--ot);
+  }
+  .ot-input{
+    width:100%;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    text-align:center;
+    border:1px solid var(--paper-line);
+    border-radius:3px;
+    background:#fff;
+    color:var(--ink);
+    padding:1px 2px;
+  }
+  .ot-input:focus{outline:none; border-color:var(--ot); box-shadow:0 0 0 2px rgba(185,129,44,0.15);}
+  .ot-slot{flex:0 0 16px; height:16px; display:flex; align-items:center;}
+  .ot-total-box{
+    background:var(--ot-bg);
+    border:1.5px solid var(--ot);
+    padding:10px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .ot-total-box .label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--ot);}
+  .ot-total-box .value{font-family:'Special Elite',cursive;font-size:20px;color:var(--ot);}
+  .weekoff-toggle{
+    position:absolute;
+    top:3px;
+    right:4px;
+    font-size:9px;
+    color:var(--ink-soft);
+    opacity:.5;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .day-cell.weekoff{background:var(--paper-dark);}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .legend i{width:10px;height:10px;display:inline-block;border:2px solid currentColor;border-radius:2px;}
+  .legend .p{color:var(--present);} .legend .a{color:var(--absent);} .legend .ot{color:var(--ot);} .legend .h{color:var(--half);} .legend .wo{color:var(--wo);}
+
+  .hint{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);margin-top:10px;}
+
+  /* Summary ledger */
+  table.ledger{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  table.ledger td, table.ledger th{padding:7px 4px;border-bottom:1px dashed var(--paper-line);}
+  table.ledger th{text-align:left;color:var(--ink-soft);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:1px;}
+  table.ledger td.num{text-align:right;font-weight:600;}
+  table.ledger tr.total td{border-top:1.5px solid var(--ink);border-bottom:none;font-weight:700;font-size:14px;padding-top:10px;}
+
+  /* Salary slip */
+  .slip{
+    background:var(--paper-dark);
+    border:1.5px dashed var(--ink);
+    padding:16px 18px;
+    margin-top:6px;
+  }
+  .slip-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .slip-row:last-child{margin-bottom:0;}
+  .slip-amount{font-family:'Special Elite',cursive;font-size:22px;}
+  .diff-ok{color:var(--present);}
+  .diff-bad{color:var(--absent);}
+  .diff-zero{color:var(--ink-soft);}
+
+  footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);margin-top:30px;letter-spacing:1px;}
+
+  @media (max-width:560px){
+    .day-cell{height:60px;}
+    .stamp{font-size:11px;padding:2px 5px;}
+    h1{font-size:22px;}
+    .month-nav .m-label{min-width:150px;font-size:15px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>Muster Roll</h1>
+      <div class="subtitle">Attendance &amp; Salary Register</div>
+    </div>
+    <div class="reg-no" id="regDate"></div>
+  </header>
+
+  <!-- Employee selector -->
+  <div class="card">
+    <div class="card-title">Employee</div>
+    <div class="emp-row">
+      <div class="field">
+        <label>Select</label>
+        <select id="empSelect"></select>
+      </div>
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="empName" placeholder="e.g. Ramesh Kumar" style="min-width:160px;">
+      </div>
+      <div class="field">
+        <label>Monthly Salary (₹)</label>
+        <input type="number" id="empSalary" placeholder="e.g. 18000" min="0" style="min-width:110px;">
+      </div>
+      <div class="field">
+        <label>Type of OT</label>
+        <select id="empOtMultiplier">
+          <option value="1">Single OT (1×)</option>
+          <option value="2">Double OT (2×)</option>
+        </select>
+      </div>
+      <button class="ghost" id="newEmpBtn">+ New</button>
+      <button class="danger" id="delEmpBtn" title="Delete this employee's record">Delete</button>
+    </div>
+    <div class="hint" id="empHint">Salary basis is fixed at 26 working days/month (4 Sundays off). OT Rate/hr = (Monthly Salary ÷ 26 ÷ 8 Hrs) × OT type (Single 1× / Double 2×). Deductions: PF 12% on Basic, ESI 0.75% on Gross, LWF 0.2% on Basic+Award+Fooding.</div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="card">
+    <div class="card-title">Daily Attendance — tap a date to mark</div>
+    <div class="month-nav">
+      <button id="prevMonth">‹ Prev</button>
+      <div class="m-label" id="monthLabel"></div>
+      <button id="nextMonth">Next ›</button>
+    </div>
+    <div class="cal-grid" id="dowRow"></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="legend">
+      <span class="p"><i></i>P — Present</span>
+      <span class="a"><i></i>A — Absent</span>
+      <span class="ot"><i></i>OT — Present + Overtime</span>
+      <span class="h"><i></i>H — Half Day</span>
+      <span class="wo"><i></i>WO — Week Off / Holiday</span>
+      <span>(Sundays default to WO, other days default to P — tap to change)</span>
+    </div>
+    <div class="hint">Mark a day OT and a small hours box appears right on that date — type the hours in directly.</div>
+  </div>
+
+  <!-- Ledger summary -->
+  <div class="card">
+    <div class="card-title">Month Summary</div>
+    <div class="ot-total-box">
+      <span class="label">Total Overtime Hours This Month</span>
+      <span class="value" id="otTotalBig">0 h</span>
+    </div>
+    <table class="ledger">
+      <tr><th>Item</th><th style="text-align:right;">Count</th><th style="text-align:right;">Amount (₹)</th></tr>
+      <tr class="total"><td>Basic (monthly salary, as entered)</td><td></td><td class="num" id="amtBasic">₹0</td></tr>
+      <tr><td>Present days (incl. OT days)</td><td class="num" id="cntP">0</td><td class="num" id="amtP">0</td></tr>
+      <tr><td>Half days</td><td class="num" id="cntH">0</td><td class="num" id="amtH">0</td></tr>
+      <tr><td>OT days</td><td class="num" id="cntOT">0</td><td class="num" id="amtOTday">0</td></tr>
+      <tr><td>Absent days</td><td class="num" id="cntA">0</td><td class="num">—</td></tr>
+      <tr><td>Week Off / Holiday days</td><td class="num" id="cntWO">0</td><td class="num">—</td></tr>
+      <tr><td>Per-day rate</td><td class="num" id="perDayRate">—</td><td class="num">—</td></tr>
+      <tr><td>Overtime hours</td><td class="num" id="cntOTHrs">0</td><td class="num" id="amtOTHrs">0</td></tr>
+      <tr><td>OT Rate / hr (auto)</td><td class="num" id="otRateAuto">—</td><td class="num">—</td></tr>
+      <tr><td>Fooding Bill (OT ≥4 hrs, ₹60/day)</td><td class="num" id="cntFooding">0</td><td class="num" id="amtFooding">0</td></tr>
+      <tr><td>Attendance Award (0/1/2+ absents → ₹500/₹400/₹0)</td><td class="num">—</td><td class="num" id="amtAward">0</td></tr>
+      <tr class="total"><td>Gross Earned</td><td></td><td class="num" id="totalEarned">₹0</td></tr>
+      <tr><td>PF Deduction (12% on Basic)</td><td class="num">−</td><td class="num" id="amtPF">0</td></tr>
+      <tr><td>ESI Deduction (0.75% on Gross)</td><td class="num">−</td><td class="num" id="amtESI">0</td></tr>
+      <tr><td>LWF Deduction (0.2% on Basic+Award+Fooding)</td><td class="num">−</td><td class="num" id="amtLWF">0</td></tr>
+      <tr class="total"><td>Net Payable (after deductions)</td><td></td><td class="num" id="netPayable">₹0</td></tr>
+    </table>
+  </div>
+
+  <!-- Salary credited -->
+  <div class="card">
+    <div class="card-title">Salary Day — Bank Credit</div>
+    <div class="emp-row">
+      <div class="field">
+        <label>Amount received in bank (₹)</label>
+        <input type="number" id="creditAmt" min="0" placeholder="e.g. 17500">
+      </div>
+      <div class="field">
+        <label>Date credited</label>
+        <input type="date" id="creditDate">
+      </div>
+    </div>
+    <div class="slip">
+      <div class="slip-row">
+        <span>Calculated Net Salary (after PF)</span>
+        <span class="slip-amount" id="slipCalc">₹0</span>
+      </div>
+      <div class="slip-row">
+        <span>Actually credited in bank</span>
+        <span class="slip-amount" id="slipCredited">— not entered —</span>
+      </div>
+      <div class="slip-row">
+        <span>Difference</span>
+        <span class="slip-amount" id="slipDiff">—</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>MUSTER ROLL · KEPT ON THIS DEVICE · ENTRIES ARE PERSONAL RECORDS ONLY</footer>
+</div>
+
+<script>
+if(typeof window.storage === 'undefined'){
+  window.storage = {
+    async get(key, shared){
+      try{
+        const raw = localStorage.getItem((shared?'shared:':'user:')+key);
+        if(raw===null) return null;
+        return {key, value: raw, shared: !!shared};
+      }catch(e){ return null; }
+    },
+    async set(key, value, shared){
+      try{
+        localStorage.setItem((shared?'shared:':'user:')+key, value);
+        return {key, value, shared: !!shared};
+      }catch(e){ return null; }
+    },
+    async delete(key, shared){
+      try{
+        localStorage.removeItem((shared?'shared:':'user:')+key);
+        return {key, deleted:true, shared: !!shared};
+      }catch(e){ return null; }
+    },
+    async list(prefix, shared){
+      try{
+        const pfx = (shared?'shared:':'user:')+(prefix||'');
+        const keys = [];
+        for(let i=0;i<localStorage.length;i++){
+          const k = localStorage.key(i);
+          if(k.indexOf(pfx)===0) keys.push(k.slice(shared?7:5));
+        }
+        return {keys, prefix, shared: !!shared};
+      }catch(e){ return null; }
+    }
+  };
+}
+</script>
+<script>
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const STATUS_CYCLE = ['P','A','OT','H','WO'];
+function defaultStatusForDay(y, m, day){
+  const dow = new Date(y, m, day).getDay();
+  return dow===0 ? 'WO' : 'P'; // Sundays default to Week Off/Holiday
+}
+
+let employees = [];      // [{id,name,salary,otRate,basis}]
+let currentEmpId = null;
+let currentDate = new Date();
+let monthData = { days:{}, otHours:{}, credited:null };
+
+function ymKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function attKey(empId, ym){ return 'att:'+empId+':'+ym; }
+
+async function loadEmployees(){
+  try{
+    const r = await window.storage.get('employees', false);
+    employees = r ? JSON.parse(r.value) : [];
+  }catch(e){ employees = []; }
+}
+async function saveEmployees(){
+  await window.storage.set('employees', JSON.stringify(employees), false);
+}
+async function loadMonth(){
+  const ym = ymKey(currentDate);
+  try{
+    const r = await window.storage.get(attKey(currentEmpId, ym), false);
+    monthData = r ? JSON.parse(r.value) : { days:{}, otHours:{}, credited:null };
+  }catch(e){
+    monthData = { days:{}, otHours:{}, credited:null };
+  }
+}
+async function saveMonth(){
+  const ym = ymKey(currentDate);
+  await window.storage.set(attKey(currentEmpId, ym), JSON.stringify(monthData), false);
+}
+
+function currentEmp(){ return employees.find(e=>e.id===currentEmpId); }
+
+function renderEmpSelect(){
+  const sel = document.getElementById('empSelect');
+  sel.innerHTML = '';
+  if(employees.length===0){
+    const opt = document.createElement('option');
+    opt.textContent = '— no employees yet —';
+    sel.appendChild(opt);
+    return;
+  }
+  employees.forEach(e=>{
+    const opt = document.createElement('option');
+    opt.value = e.id; opt.textContent = e.name;
+    if(e.id===currentEmpId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function fillEmpFields(){
+  const e = currentEmp();
+  document.getElementById('empName').value = e ? e.name : '';
+  document.getElementById('empSalary').value = e ? e.salary : '';
+  document.getElementById('empOtMultiplier').value = e ? (e.otMultiplier!=null?e.otMultiplier:2) : '';
+  document.getElementById('empHint').textContent = e ? '' : 'No employee selected. Fill the fields above and click Save, or + New.';
+}
+
+function daysInMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); }
+
+function renderCalendarHeader(){
+  document.getElementById('monthLabel').textContent =
+    currentDate.toLocaleString('en-IN',{month:'long', year:'numeric'});
+  const dowRow = document.getElementById('dowRow');
+  dowRow.innerHTML = '';
+  DOW.forEach(d=>{
+    const el = document.createElement('div');
+    el.className='dow'; el.textContent=d;
+    dowRow.appendChild(el);
+  });
+}
+
+function renderCalendarGrid(){
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  const first = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const startDow = first.getDay();
+  const total = daysInMonth(currentDate);
+
+  for(let i=0;i<startDow;i++){
+    const empty = document.createElement('div');
+    empty.className = 'day-cell empty';
+    grid.appendChild(empty);
+  }
+
+  for(let day=1; day<=total; day++){
+    const cell = document.createElement('div');
+    cell.className = 'day-cell';
+    const status = monthData.days[day] || defaultStatusForDay(currentDate.getFullYear(), currentDate.getMonth(), day);
+    cell.setAttribute('data-status', status);
+
+    const num = document.createElement('div');
+    num.className='day-num'; num.textContent = day;
+    cell.appendChild(num);
+
+    const stampSlot = document.createElement('div');
+    stampSlot.className='stamp-slot';
+    const stamp = document.createElement('div');
+    stamp.className='stamp';
+    stamp.textContent = status;
+    stampSlot.appendChild(stamp);
+    cell.appendChild(stampSlot);
+
+    const otSlot = document.createElement('div');
+    otSlot.className='ot-slot';
+    if(status==='OT'){
+      const oh = document.createElement('input');
+      oh.type='number';
+      oh.min='0'; oh.step='0.5';
+      oh.className='ot-input';
+      oh.value = monthData.otHours[day] || 0;
+      oh.placeholder='hrs';
+      oh.addEventListener('click', (ev)=> ev.stopPropagation());
+      oh.addEventListener('change', (ev)=>{
+        const n = parseFloat(ev.target.value);
+        monthData.otHours[day] = isNaN(n) || n<0 ? 0 : n;
+        saveMonth();
+        renderSummary();
+      });
+      otSlot.appendChild(oh);
+    }
+    cell.appendChild(otSlot);
+
+    cell.addEventListener('click', ()=> cycleStatus(day));
+    grid.appendChild(cell);
+  }
+}
+
+function cycleStatus(day){
+  const cur = monthData.days[day] || defaultStatusForDay(currentDate.getFullYear(), currentDate.getMonth(), day);
+  const idx = STATUS_CYCLE.indexOf(cur);
+  const next = STATUS_CYCLE[(idx+1) % STATUS_CYCLE.length];
+  monthData.days[day] = next;
+  if(next==='OT' && !monthData.otHours[day]){
+    monthData.otHours[day] = 1;
+  }
+  if(next!=='OT'){ delete monthData.otHours[day]; }
+  saveMonth();
+  renderCalendarGrid();
+  renderSummary();
+  if(next==='OT'){
+    const cells = document.querySelectorAll('.cal-grid .day-cell');
+    cells.forEach(c=>{
+      if(c.querySelector('.day-num') && c.querySelector('.day-num').textContent==String(day)){
+        const inp = c.querySelector('.ot-input');
+        if(inp){ inp.focus(); inp.select(); }
+      }
+    });
+  }
+}
+
+function computeTotals(){
+  const e = currentEmp();
+  const total = daysInMonth(currentDate);
+  const FOODING_RATE = 60;
+  const FOODING_MIN_HRS = 4;
+  const PF_RATE = 0.12;
+  const ESI_RATE = 0.0075;
+  const LWF_RATE = 0.002;
+  let cP=0, cA=0, cOT=0, cH=0, cWO=0, otHrsTotal=0, cFooding=0;
+  for(let day=1; day<=total; day++){
+    const s = monthData.days[day] || defaultStatusForDay(currentDate.getFullYear(), currentDate.getMonth(), day);
+    if(s==='P') cP++;
+    else if(s==='A') cA++;
+    else if(s==='OT'){
+      cOT++;
+      const hrs = monthData.otHours[day]||0;
+      otHrsTotal += hrs;
+      if(hrs >= FOODING_MIN_HRS) cFooding++;
+    }
+    else if(s==='H') cH++;
+    else if(s==='WO') cWO++;
+  }
+
+  const basisDays = 26; // fixed standard working days per month (4 Sundays off)
+
+  const salary = e ? (parseFloat(e.salary)||0) : 0;
+  const workHours = 8; // fixed standard working hours per day
+  const otMultiplier = e ? (parseFloat(e.otMultiplier)||2) : 2;
+  const perDay = basisDays>0 ? salary/basisDays : 0;
+  const otRate = workHours>0 ? (perDay/workHours)*otMultiplier : 0;
+
+  // Basic: the monthly salary as entered by the user (fixed, not attendance-prorated) — used for PF/LWF
+  const basic = salary;
+
+  // Attendance-based earned pay (present + half-day + OT-day full pay at the per-day rate)
+  const amtP = cP*perDay;
+  const amtH = cH*perDay*0.5;
+  const amtOTday = cOT*perDay;
+  const earnedAttendance = amtP+amtH+amtOTday;
+
+  const amtOTHrs = otHrsTotal*otRate;
+  const amtFooding = cFooding*FOODING_RATE;
+
+  // Attendance award: WO days are never counted as absence here (cA already excludes WO)
+  let amtAward = 0;
+  if(cA===0) amtAward = 500;
+  else if(cA===1) amtAward = 400;
+  else amtAward = 0;
+
+  const gross = earnedAttendance + amtOTHrs + amtFooding + amtAward;
+
+  const amtPF = basic * PF_RATE;
+  const amtESI = gross * ESI_RATE;
+  const amtLWF = (basic + amtAward + amtFooding) * LWF_RATE;
+  const totalDeductions = amtPF + amtESI + amtLWF;
+  const net = gross - totalDeductions;
+
+  return {cP,cA,cOT,cH,cWO,otHrsTotal,cFooding,amtFooding,amtAward,basic,earnedAttendance,perDay,otRate,amtP,amtH,amtOTday,amtOTHrs,total:gross,amtPF,amtESI,amtLWF,net};
+}
+
+function fmt(n){
+  return '₹'+Math.round(n).toLocaleString('en-IN');
+}
+
+function renderSummary(){
+  const t = computeTotals();
+  document.getElementById('cntP').textContent = t.cP + t.cOT;
+  document.getElementById('cntH').textContent = t.cH;
+  document.getElementById('cntOT').textContent = t.cOT;
+  document.getElementById('cntOTHrs').textContent = t.otHrsTotal;
+  document.getElementById('otTotalBig').textContent = t.otHrsTotal+' h';
+  document.getElementById('otRateAuto').textContent = fmt(t.otRate)+'/hr';
+  document.getElementById('cntFooding').textContent = t.cFooding;
+  document.getElementById('amtFooding').textContent = Math.round(t.amtFooding).toLocaleString('en-IN');
+  document.getElementById('cntA').textContent = t.cA;
+  document.getElementById('cntWO').textContent = t.cWO;
+  document.getElementById('amtP').textContent = Math.round(t.amtP).toLocaleString('en-IN');
+  document.getElementById('amtH').textContent = Math.round(t.amtH).toLocaleString('en-IN');
+  document.getElementById('amtOTday').textContent = Math.round(t.amtOTday).toLocaleString('en-IN');
+  document.getElementById('amtOTHrs').textContent = Math.round(t.amtOTHrs).toLocaleString('en-IN');
+  document.getElementById('perDayRate').textContent = fmt(t.perDay);
+  document.getElementById('amtBasic').textContent = fmt(t.basic);
+  document.getElementById('amtAward').textContent = Math.round(t.amtAward).toLocaleString('en-IN');
+  document.getElementById('totalEarned').textContent = fmt(t.total);
+  document.getElementById('amtPF').textContent = Math.round(t.amtPF).toLocaleString('en-IN');
+  document.getElementById('amtESI').textContent = Math.round(t.amtESI).toLocaleString('en-IN');
+  document.getElementById('amtLWF').textContent = Math.round(t.amtLWF).toLocaleString('en-IN');
+  document.getElementById('netPayable').textContent = fmt(t.net);
+
+  document.getElementById('slipCalc').textContent = fmt(t.net);
+
+  const credited = monthData.credited;
+  const creditedEl = document.getElementById('slipCredited');
+  const diffEl = document.getElementById('slipDiff');
+  if(credited && credited.amount!=null && credited.amount!==''){
+    creditedEl.textContent = fmt(parseFloat(credited.amount));
+    const diff = parseFloat(credited.amount) - t.net;
+    diffEl.textContent = (diff>=0?'+':'') + fmt(diff);
+    diffEl.className = 'slip-amount ' + (diff===0?'diff-zero':(diff>0?'diff-ok':'diff-bad'));
+    document.getElementById('creditAmt').value = credited.amount;
+    document.getElementById('creditDate').value = credited.date || '';
+  } else {
+    creditedEl.textContent = '— not entered —';
+    diffEl.textContent = '—';
+    diffEl.className = 'slip-amount diff-zero';
+    document.getElementById('creditAmt').value = '';
+    document.getElementById('creditDate').value = '';
+  }
+}
+
+async function refreshAll(){
+  renderEmpSelect();
+  fillEmpFields();
+  renderCalendarHeader();
+  if(currentEmpId){
+    await loadMonth();
+  } else {
+    monthData = { days:{}, otHours:{}, credited:null };
+  }
+  renderCalendarGrid();
+  renderSummary();
+}
+
+// --- Event wiring ---
+document.getElementById('empSelect').addEventListener('change', async (e)=>{
+  currentEmpId = e.target.value;
+  await refreshAll();
+});
+
+let autoSaveTimer = null;
+function scheduleAutoSave(){
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(autoSaveEmployee, 350);
+}
+
+async function autoSaveEmployee(){
+  const name = document.getElementById('empName').value.trim();
+  if(!name) return; // wait until a name is entered before creating a record
+  const salary = document.getElementById('empSalary').value;
+  const otMultiplier = document.getElementById('empOtMultiplier').value || 2;
+
+  let e = currentEmp();
+  let isNew = false;
+  if(!e){
+    e = { id: 'emp_'+Date.now(), name, salary, otMultiplier };
+    employees.push(e);
+    currentEmpId = e.id;
+    isNew = true;
+  } else {
+    e.name = name; e.salary = salary; e.otMultiplier = otMultiplier;
+  }
+  await saveEmployees();
+  renderEmpSelect();
+  if(isNew){
+    await loadMonth();
+    renderCalendarGrid();
+  }
+  renderSummary();
+  document.getElementById('empHint').textContent = 'Saved automatically.';
+}
+
+['empName','empSalary'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', scheduleAutoSave);
+});
+document.getElementById('empOtMultiplier').addEventListener('change', scheduleAutoSave);
+
+document.getElementById('newEmpBtn').addEventListener('click', async ()=>{
+  currentEmpId = null;
+  document.getElementById('empName').value='';
+  document.getElementById('empSalary').value='';
+  document.getElementById('empOtMultiplier').value='2';
+  monthData = { days:{}, otHours:{}, credited:null };
+  renderCalendarGrid();
+  renderSummary();
+  document.getElementById('empHint').textContent = 'Type a name and details — this saves automatically as you type.';
+});
+
+document.getElementById('delEmpBtn').addEventListener('click', async ()=>{
+  const e = currentEmp();
+  if(!e) return;
+  if(!confirm('Delete "'+e.name+'" and stop tracking them? (Past monthly records stay stored but will be orphaned.)')) return;
+  employees = employees.filter(x=>x.id!==e.id);
+  currentEmpId = employees.length ? employees[0].id : null;
+  await saveEmployees();
+  await refreshAll();
+});
+
+document.getElementById('prevMonth').addEventListener('click', async ()=>{
+  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth()-1, 1);
+  renderCalendarHeader();
+  if(currentEmpId){ await loadMonth(); }
+  renderCalendarGrid();
+  renderSummary();
+});
+document.getElementById('nextMonth').addEventListener('click', async ()=>{
+  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth()+1, 1);
+  renderCalendarHeader();
+  if(currentEmpId){ await loadMonth(); }
+  renderCalendarGrid();
+  renderSummary();
+});
+
+async function autoSaveCredit(){
+  if(!currentEmpId) return;
+  const amt = document.getElementById('creditAmt').value;
+  const date = document.getElementById('creditDate').value;
+  monthData.credited = { amount: amt, date: date };
+  await saveMonth();
+  renderSummary();
+}
+document.getElementById('creditAmt').addEventListener('input', autoSaveCredit);
+document.getElementById('creditDate').addEventListener('change', autoSaveCredit);
+
+// --- Init ---
+(async function init(){
+  document.getElementById('regDate').textContent = 'TODAY: ' + new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  await loadEmployees();
+  if(employees.length){ currentEmpId = employees[0].id; }
+  await refreshAll();
+})();
+</script>
+</body>
+</html>

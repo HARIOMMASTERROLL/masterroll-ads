@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "23251170217",
+    "project_id": "mastr-roll",
+    "storage_bucket": "mastr-roll.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:23251170217:android:795ce9d784e44b4cc58ab8",
+        "android_client_info": {
+          "package_name": "com.masterroll.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCo48Sy0H0G7NjNxHEVW6lxKPje5pLbN9Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
